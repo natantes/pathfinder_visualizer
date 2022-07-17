@@ -4,10 +4,10 @@ import PySimpleGUI as sg
 from bfs import bfs
 from dfs import dfs
 from astar import *
+from astar2 import *
+from dijkstra import dijkstra
 
 WIDTH = 800
-WIN = pygame.display.set_mode((WIDTH, WIDTH))
-pygame.display.set_caption("A* Path Finding Algorithm")
 
 RED = (255, 0, 0)
 GREEN = (118, 255, 97)
@@ -16,7 +16,7 @@ YELLOW = (238,201,0)
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 PURPLE = (212, 187, 252)
-ORANGE = (255, 132, 3)
+ORANGE = (130, 0, 172)
 GREY = (230,238,245)
 TURQUOISE = (25, 146, 252)
 gradient = [255, 0, 10]
@@ -122,31 +122,40 @@ class Node:
 sg.theme('LightPurple')
 
 
+def main_menu():
 
-def main_menu(win, width, grid, ROWS, start, end):
+    font = ("Arial", 14)
+
     layout = [[sg.Text('Main Menu')],
-            [sg.Button('A* Pathfinder')],
+            [sg.Button('A* Pathfinder (Manhattan Heuristic)')],
+            [sg.Button('A* Pathfinder (Euclidean Heuristic)')],
+            [sg.Button("Dijkstra's Algorithm Pathfinder")],
             [sg.Button('Breadth First Search Pathfinder')],
             [sg.Button('Depth First Search Pathfinder')],
-            [sg.Button('Exit')]]
+            [sg.Button('Exit', size=6)]]
 
-    window = sg.Window('Pattern 2B', layout, element_justification='c')
+    window = sg.Window('MAIN MENU', layout, element_justification='c', font=font)
 
     while True:  # Event Loop
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Exit':
-            break
-        if event == 'A* Pathfinder':
+            window.close()
+            return "exit"
+        if event == 'A* Pathfinder (Manhattan Heuristic)':
             window.close()
             return "a1"
+        if event == 'A* Pathfinder (Euclidean Heuristic)':
+            window.close()
+            return "a2"
+        if event == "Dijkstra's Algorithm Pathfinder":
+            window.close()
+            return "dij"
         if event == 'Breadth First Search Pathfinder':
             window.close()
             return "bfs"
         if event == 'Depth First Search Pathfinder':
             window.close()
             return "dfs"
-
-    window.close()
 
 
 def make_grid(rows, width):
@@ -157,8 +166,6 @@ def make_grid(rows, width):
         for j in range(rows):
             node = Node(i, j, gap, rows)
             grid[i].append(node)
-
-    gradient = [255, 0, 0]
 
     return grid
 
@@ -194,6 +201,14 @@ def get_clicked_pos(pos, rows, width):
 
 def main(win, width):
 
+    pathfinder = None
+
+    while not pathfinder:
+        pathfinder = main_menu()
+
+    win = pygame.display.set_mode((WIDTH, WIDTH))
+    pygame.display.set_caption("A* Path Finding Algorithm")
+
     ROWS = 50
     grid = make_grid(ROWS, width)
 
@@ -203,60 +218,57 @@ def main(win, width):
     run = True
     started = False
     
-    pathfinder = None
+    a_dict = {"a1" : astar, "a2": astar2, "dfs": dfs, "bfs": bfs, "dij": dijkstra}
+    
+    if pathfinder != "exit":
+        while run:
+            draw(win, grid, ROWS, width)
 
-    a_dict = {"a1" : astar, "dfs": dfs, "bfs": bfs}
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
 
-    while not pathfinder:
-        pathfinder = main_menu(win, width, grid, ROWS, start, end)
+                if started:
+                    continue
 
-    while run:
-        draw(win, grid, ROWS, width)
+                if pygame.mouse.get_pressed()[0]: # left mouse button clicked
+                    pos = pygame.mouse.get_pos()
+                    row, col = get_clicked_pos(pos, ROWS, width)
+                    node = grid[row][col]
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
+                    if not start and node != end:
+                        start = node
+                        start.make_start()
+                    elif not end and node != start:
+                        end = node
+                        end.make_end()
+                    elif node != end and node != start:
+                        node.make_barrier()
 
-            if started:
-                continue
+                elif pygame.mouse.get_pressed()[2]: # right mouse button clicked
+                    pos = pygame.mouse.get_pos()
+                    row, col = get_clicked_pos(pos, ROWS, width)
+                    node = grid[row][col]
+                    node.reset()
+                    if node == start:
+                        start = None
+                    elif node == end:
+                        end = None
+                    
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE and start and end:
+                        for row in grid:
+                            for node in row:
+                                node.update_neighbors(grid)
 
-            if pygame.mouse.get_pressed()[0]: # left mouse button clicked
-                pos = pygame.mouse.get_pos()
-                row, col = get_clicked_pos(pos, ROWS, width)
-                node = grid[row][col]
+                        a_dict[pathfinder](lambda: draw(win, grid, ROWS, width), grid, start, end)
 
-                if not start and node != end:
-                    start = node
-                    start.make_start()
-                elif not end and node != start:
-                    end = node
-                    end.make_end()
-                elif node != end and node != start:
-                    node.make_barrier()
-
-            elif pygame.mouse.get_pressed()[2]: # right mouse button clicked
-                pos = pygame.mouse.get_pos()
-                row, col = get_clicked_pos(pos, ROWS, width)
-                node = grid[row][col]
-                node.reset()
-                if node == start:
-                    start = None
-                elif node == end:
-                    end = None
-                
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and start and end:
-                    for row in grid:
-                        for node in row:
-                            node.update_neighbors(grid)
-
-                    a_dict[pathfinder](lambda: draw(win, grid, ROWS, width), grid, start, end)
-
-                if event.key == pygame.K_c:
-                    start = None
-                    end = None
-                    grid = make_grid(ROWS, width)
+                    if event.key == pygame.K_c:
+                        start = None
+                        end = None
+                        grid = make_grid(ROWS, width)
 
     pygame.quit()
 
+WIN = "placeholder"
 main(WIN, WIDTH)

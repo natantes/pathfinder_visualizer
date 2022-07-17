@@ -134,7 +134,7 @@ def main_menu():
             [sg.Button('Depth First Search Pathfinder')],
             [sg.Button('Exit', size=6)]]
 
-    window = sg.Window('MAIN MENU', layout, element_justification='c', font=font)
+    window = sg.Window('Main Menu', layout, element_justification='c', font=font)
 
     while True:  # Event Loop
         event, values = window.read()
@@ -143,19 +143,19 @@ def main_menu():
             return "exit"
         if event == 'A* Pathfinder (Manhattan Heuristic)':
             window.close()
-            return "a1"
+            return 'A* Pathfinder (Manhattan Heuristic)'
         if event == 'A* Pathfinder (Euclidean Heuristic)':
             window.close()
-            return "a2"
+            return 'A* Pathfinder (Euclidean Heuristic)'
         if event == "Dijkstra's Algorithm Pathfinder":
             window.close()
-            return "dij"
+            return "Dijkstra's Algorithm Pathfinder"
         if event == 'Breadth First Search Pathfinder':
             window.close()
-            return "bfs"
+            return 'Breadth First Search Pathfinder'
         if event == 'Depth First Search Pathfinder':
             window.close()
-            return "dfs"
+            return 'Depth First Search Pathfinder'
 
 
 def make_grid(rows, width):
@@ -207,7 +207,7 @@ def main(win, width):
         pathfinder = main_menu()
 
     win = pygame.display.set_mode((WIDTH, WIDTH))
-    pygame.display.set_caption("A* Path Finding Algorithm")
+    pygame.display.set_caption(pathfinder)
 
     ROWS = 50
     grid = make_grid(ROWS, width)
@@ -218,7 +218,7 @@ def main(win, width):
     run = True
     started = False
     
-    a_dict = {"a1" : astar, "a2": astar2, "dfs": dfs, "bfs": bfs, "dij": dijkstra}
+    a_dict = {'A* Pathfinder (Manhattan Heuristic)' : astar, 'A* Pathfinder (Euclidean Heuristic)': astar2, 'Depth First Search Pathfinder': dfs, 'Breadth First Search Pathfinder': bfs, "Dijkstra's Algorithm Pathfinder": dijkstra}
     
     if pathfinder != "exit":
         while run:
